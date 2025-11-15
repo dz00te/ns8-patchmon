@@ -10,3 +10,5 @@ set -e
 if ! systemctl --user -q is-active patchmon.service; then
 	exit 0
 fi
+echo "Dumping  postgres database"
+podman exec database-app pg_dump -U postgres --format=c  database > database.pg_dump
