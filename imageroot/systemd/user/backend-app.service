@@ -1,0 +1,30 @@
+#
+# Copyright (C) 2022 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+[Unit]
+Description=Podman  backend-app.service
+BindsTo=patchmon.service
+After=patchmon.service database-app.service redis-app.service
+
+[Service]
+Environment=PODMAN_SYSTEMD_UNIT=%n
+EnvironmentFile=%S/state/environment
+EnvironmentFile=-%S/state/smarthost.env
+WorkingDirectory=%S/state
+Restart=always
+TimeoutStopSec=70
+ExecStartPre=/bin/mkdir -p tmp
+ExecStartPre=/bin/rm -f %t/backend-app.pid %t/backend-app.ctr-id
+ExecStartPre=-runagent discover-smarthost
+ExecStart=/usr/bin/podman run --conmon-pidfile %t/backend-app.pid  --cidfile %t/backend-app.ctr-id --cgroups=no-conmon  --pod-id-file %t/patchmon.pod-id --replace -d --name  backend-app  --volume agentfiles:/app/agents:Z   --env-file backend.env  ${PATCHMON_BACKEND_IMAGE}  
+ExecStop=/usr/bin/podman stop --ignore --cidfile %t/backend-app.ctr-id -t 10
+ExecReload=/usr/bin/podman kill -s HUP backend-app
+SyslogIdentifier=%u
+ExecStopPost=/usr/bin/podman rm --ignore -f --cidfile %t/backend-app.ctr-id
+PIDFile=%t/backend-app.pid
+Type=forking
+
+[Install]
+WantedBy=default.target
