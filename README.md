@@ -1,6 +1,7 @@
 # ns8-patchmon
 
 This is a template module for [NethServer 8](https://github.com/NethServer/ns8-core).
+
 To start a new module from it:
 
 1. Click on [Use this template](https://github.com/NethServer/ns8-patchmon/generate).
