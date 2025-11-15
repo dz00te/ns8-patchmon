@@ -26,3 +26,13 @@ def generate_random_password(length):
 
 # just before starting systemd unit
 # agent.dump_env()
+POSTGRES_DB = data.get("POSTGRES_DB", "patchmon_db") 
+POSTGRES_USER = data.get("POSTGRES_USER", "patchmon_user") 
+POSTGRES_PASSWORD = data.get("POSTGRES_PASSWORD", "") 
+ 
+database = { 
+ "POSTGRES_DB" : POSTGRES_DB ,
+ "POSTGRES_USER" : POSTGRES_USER ,
+ "POSTGRES_PASSWORD" : POSTGRES_PASSWORD ,
+} 
+agent.write_envfile("database.env", database) 
