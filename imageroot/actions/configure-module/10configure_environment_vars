@@ -31,9 +31,9 @@ JWT_SECRET = data.get("JWT_SECRET", "")
 DB_CONNECTION_LIMIT = data.get("DB_CONNECTION_LIMIT", "30") 
 DB_CONNECT_TIMEOUT = data.get("DB_CONNECT_TIMEOUT", "10") 
 DB_MAX_LIFETIME = data.get("DB_MAX_LIFETIME", "1800") 
-REDIS_PASSWORD = data.get("REDIS_PASSWORD", "your-redis-password-here") 
+REDIS_PASSWORD = data.get("REDIS_PASSWORD", "3ds3wJX3P3imhT56Jg") 
 REDIS_DB = data.get("REDIS_DB", "0") 
-DATABASE_URL = data.get("DATABASE_URL", "postgresql://patchmon_user:REPLACE_YOUR_POSTGRES_PASSWORD_HERE@database:5432/patchmon_db") 
+DATABASE_URL = data.get("DATABASE_URL", "postgresql://patchmon_user:G29jmyQ5t7WJiX2knN@database:5432/patchmon_db") 
 SERVER_PROTOCOL = data.get("SERVER_PROTOCOL", "http") 
 CORS_ORIGIN = data.get("CORS_ORIGIN", "http://localhost:3000") 
 DB_IDLE_TIMEOUT = data.get("DB_IDLE_TIMEOUT", "300") 
@@ -55,7 +55,7 @@ backend = {
  "DB_CONNECTION_LIMIT" : DB_CONNECTION_LIMIT ,
  "DB_CONNECT_TIMEOUT" : DB_CONNECT_TIMEOUT ,
  "DB_MAX_LIFETIME" : DB_MAX_LIFETIME ,
- "REDIS_PASSWORD" : REDIS_PASSWORD ,
+ "REDIS_PASSWORD" : 3ds3wJX3P3imhT56Jg ,
  "REDIS_DB" : REDIS_DB ,
  "DATABASE_URL" : DATABASE_URL ,
  "SERVER_PROTOCOL" : SERVER_PROTOCOL ,
