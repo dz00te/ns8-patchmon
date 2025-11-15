@@ -67,3 +67,7 @@ backend = {
  "DB_POOL_TIMEOUT" : DB_POOL_TIMEOUT ,
 } 
 agent.write_envfile("backend.env", backend) 
+ 
+frontend = { 
+} 
+agent.write_envfile("frontend.env", frontend) 
