@@ -7,3 +7,28 @@
 
 set -e -o pipefail
 exec 1>&2 # Redirect any output to the journal (stderr)
+# Create restore directory
+mkdir -vp restore
+
+# Create restore script
+cat - >restore/monica_restore.sh <<'EOS'
+# Read dump file from standard input:
+pg_restore --no-owner --no-privileges -U postgres -d database
+ec=$?
+docker_temp_server_stop
+exit $ec
+EOS
+
+# Run the restore container
+podman run \
+    --rm \
+    --interactive \
+    --network=none \
+    --volume=./restore:/docker-entrypoint-initdb.d/:Z \
+    --volume=postgres-data:/var/lib/postgresql/data:Z \
+    --replace --name=restore_db \
+    --env-file database.env \
+    "${POSTGRES_IMAGE}" < database.pg_dump
+
+# Clean up
+rm -rfv restore/ database.pg_dump
