@@ -9,14 +9,15 @@ import json
 import sys
 import agent
 import secrets
+import os
 
 # Parse input (will be empty during create-module, that's OK)
 data = json.load(sys.stdin)
 
-# === ALLOCATE RESOURCES ===
-# Allocate 1 TCP port for the web interface
-tcp_ports = agent.allocate_ports(1, "tcp")
-tcp_port = str(tcp_ports[0])
+# === TCP PORT ===
+# The port is already allocated by NS8 and available as environment variable
+# DO NOT call agent.allocate_ports() - it causes 403 Forbidden
+tcp_port = os.environ.get("TCP_PORT", "20000")  # Fallback should never be needed
 agent.set_env("TCP_PORT", tcp_port)
 
 # === GENERATE SECURE PASSWORDS ===
@@ -80,3 +81,4 @@ agent.set_env("DB_POOL_TIMEOUT", "20")
 # CORS - will be updated by configure-module when hostname is set
 agent.set_env("CORS_ORIGIN", "http://localhost:3000")
 agent.set_env("NEXT_PUBLIC_API_URL", "http://localhost:3001")
+
