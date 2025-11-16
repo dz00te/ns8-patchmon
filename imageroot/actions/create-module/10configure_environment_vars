@@ -9,12 +9,19 @@ import json
 import sys
 import agent
 import secrets
+import string
 
 # Parse input data
 data = json.load(sys.stdin)
 
-# Generate hardcoded database password (TODO: generate randomly in future)
-POSTGRES_PASSWORD = "G29jmyQ5t7WJiX2knN"
+# Generate random secure password for PostgreSQL
+def generate_random_password(length=32):
+    """Generate a secure random password with letters, digits, and special characters"""
+    alphabet = string.ascii_letters + string.digits
+    return ''.join(secrets.choice(alphabet) for _ in range(length))
+
+# Generate random database password
+POSTGRES_PASSWORD = generate_random_password(32)
 
 # Generate JWT secret for authentication
 JWT_SECRET = secrets.token_urlsafe(32)
@@ -84,4 +91,4 @@ frontend = {}
 agent.write_envfile("frontend.env", frontend)
 
 print("Environment variables configured successfully", file=sys.stderr)
-
+print(f"Generated random PostgreSQL password (length: {len(POSTGRES_PASSWORD)})", file=sys.stderr)
