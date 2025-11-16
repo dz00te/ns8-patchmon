@@ -17,16 +17,9 @@ data = json.load(sys.stdin)
 state_dir = os.environ.get("AGENT_STATE_DIR", "")
 backend_env_path = os.path.join(state_dir, 'backend.env')
 
-# Update CORS origin when hostname is reconfigured
+# Update backend.env when hostname is reconfigured
 host = data.get("host", "")
 if host and os.path.exists(backend_env_path):
-    # Build CORS origin based on Let's Encrypt setting
-    if data.get("lets_encrypt"):
-        cors_origin = f"https://{host}"
-    else:
-        # Allow both HTTP and HTTPS when not using Let's Encrypt
-        cors_origin = f"http://{host},https://{host}"
-    
     # Read existing backend.env preserving all variables
     env_vars = {}
     with open(backend_env_path, 'r') as f:
@@ -36,8 +29,19 @@ if host and os.path.exists(backend_env_path):
                 key, value = line.split('=', 1)
                 env_vars[key] = value
     
-    # Update only CORS_ORIGIN, preserving DATABASE_URL, JWT_SECRET, REDIS_HOST, etc.
+    # Build CORS origin based on Let's Encrypt setting
+    if data.get("lets_encrypt"):
+        cors_origin = f"https://{host}"
+        server_port = "443"
+    else:
+        # Allow both HTTP and HTTPS when not using Let's Encrypt
+        cors_origin = f"http://{host},https://{host}"
+        server_port = "80"
+    
+    # Update CORS_ORIGIN, SERVER_HOST, and SERVER_PORT
     env_vars['CORS_ORIGIN'] = cors_origin
+    env_vars['SERVER_HOST'] = host
+    env_vars['SERVER_PORT'] = server_port
     
     # Write back to file
     with open(backend_env_path, 'w') as f:
@@ -45,6 +49,8 @@ if host and os.path.exists(backend_env_path):
             f.write(f'{key}={value}\n')
     
     print(f"Updated CORS_ORIGIN to: {cors_origin}", file=sys.stderr)
+    print(f"Updated SERVER_HOST to: {host}", file=sys.stderr)
+    print(f"Updated SERVER_PORT to: {server_port}", file=sys.stderr)
 
 # Configure Traefik routing
 response = agent.tasks.run(
