@@ -18,7 +18,21 @@ TimeoutStopSec=70
 ExecStartPre=/bin/mkdir -p tmp
 ExecStartPre=/bin/rm -f %t/frontend-app.pid %t/frontend-app.ctr-id
 ExecStartPre=-runagent discover-smarthost
-ExecStart=/usr/bin/podman run --conmon-pidfile %t/frontend-app.pid  --cidfile %t/frontend-app.ctr-id --cgroups=no-conmon  --pod-id-file %t/patchmon.pod-id --replace -d --name  frontend-app     --env-file frontend.env  ${PATCHMON_FRONTEND_IMAGE}  
+# Set backend connection to localhost since containers share pod network namespace
+# BACKEND_HOST and BACKEND_PORT are used by nginx template substitution
+ExecStart=/usr/bin/podman run \
+  --conmon-pidfile %t/frontend-app.pid \
+  --cidfile %t/frontend-app.ctr-id \
+  --cgroups=no-conmon \
+  --pod-id-file %t/patchmon.pod-id \
+  --replace -d \
+  --name frontend-app \
+  --env-file=%S/state/frontend.env \
+  -e BACKEND_HOST=127.0.0.1 \
+  -e BACKEND_PORT=3001 \
+  -e NEXT_PUBLIC_API_URL=http://127.0.0.1:3001 \
+  -e API_URL=http://127.0.0.1:3001 \
+  ${PATCHMON_FRONTEND_IMAGE}
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/frontend-app.ctr-id -t 10
 ExecReload=/usr/bin/podman kill -s HUP frontend-app
 SyslogIdentifier=%u

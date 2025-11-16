@@ -10,29 +10,59 @@ import sys
 import agent
 import os
 
-# Try to parse the stdin as JSON.
-# If parsing fails, output everything to stderr
+# Parse input data from stdin
 data = json.load(sys.stdin)
 
-# This is specific to you module, so you need to change it accordingly.
+# Get state directory
+state_dir = os.environ.get("AGENT_STATE_DIR", "")
+backend_env_path = os.path.join(state_dir, 'backend.env')
 
+# Update CORS origin when hostname is reconfigured
+host = data.get("host", "")
+if host:
+    # Build CORS origin based on Let's Encrypt setting
+    if data.get("lets_encrypt"):
+        cors_origin = f"https://{host}"
+    else:
+        # Allow both HTTP and HTTPS when not using Let's Encrypt
+        cors_origin = f"http://{host},https://{host}"
+    
+    # Update CORS_ORIGIN in backend.env if file exists
+    if os.path.exists(backend_env_path):
+        # Read existing backend.env
+        with open(backend_env_path, 'r') as f:
+            lines = f.readlines()
+        
+        # Update CORS_ORIGIN line, keeping other variables intact
+        cors_updated = False
+        with open(backend_env_path, 'w') as f:
+            for line in lines:
+                if line.startswith('CORS_ORIGIN='):
+                    f.write(f'CORS_ORIGIN={cors_origin}\n')
+                    cors_updated = True
+                else:
+                    f.write(line)
+            
+            # Add CORS_ORIGIN if it wasn't present
+            if not cors_updated:
+                f.write(f'CORS_ORIGIN={cors_origin}\n')
+        
+        print(f"Updated CORS_ORIGIN to: {cors_origin}", file=sys.stderr)
 
-def generate_random_password(length):
-    # Generate random bytes and convert them to a hexadecimal string
-    random_bytes = os.urandom(length)
-    password = random_bytes.hex()
-    return password[:length]
+# Configure Traefik routing
+response = agent.tasks.run(
+    agent_id=agent.resolve_agent_id('traefik@node'),
+    action='set-route',
+    data={
+        'instance': os.environ['MODULE_ID'],
+        'url': f'http://127.0.0.1:{os.environ["TCP_PORT"]}',
+        'http2https': data.get('http2https', True),
+        'lets_encrypt': data.get('lets_encrypt', False),
+        'host': host,
+    },
+)
 
+# Check if traefik configuration was successful
+agent.assert_exp(response['exit_code'] == 0)
 
-# just before starting systemd unit
-# agent.dump_env()
-POSTGRES_DB = data.get("POSTGRES_DB", "patchmon_db") 
-POSTGRES_USER = data.get("POSTGRES_USER", "patchmon_user") 
-POSTGRES_PASSWORD = data.get("POSTGRES_PASSWORD", "") 
- 
-database = { 
- "POSTGRES_DB" : POSTGRES_DB ,
- "POSTGRES_USER" : POSTGRES_USER ,
- "POSTGRES_PASSWORD" : POSTGRES_PASSWORD ,
-} 
-agent.write_envfile("database.env", database) 
+print("Module reconfigured successfully", file=sys.stderr)
