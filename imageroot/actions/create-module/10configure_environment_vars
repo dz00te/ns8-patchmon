@@ -7,14 +7,11 @@
 
 import json
 import sys
-import os
+import agent
 import secrets
 
 # Parse input data
 data = json.load(sys.stdin)
-
-# Get state directory
-state_dir = os.environ.get("AGENT_STATE_DIR", "")
 
 # Generate hardcoded database password (TODO: generate randomly in future)
 POSTGRES_PASSWORD = "G29jmyQ5t7WJiX2knN"
@@ -23,15 +20,16 @@ POSTGRES_PASSWORD = "G29jmyQ5t7WJiX2knN"
 JWT_SECRET = secrets.token_urlsafe(32)
 
 # Build database connection URL with localhost (127.0.0.1)
-# Containers in the same pod share network namespace and use localhost
+# Containers in same pod share network namespace
 DATABASE_URL = f"postgresql://patchmon_user:{POSTGRES_PASSWORD}@127.0.0.1:5432/patchmon_db"
 
 # Redis connection (localhost in pod)
 REDIS_HOST = "127.0.0.1"
 REDIS_PORT = "6379"
+REDIS_PASSWORD = ""  # No password for local Redis
+REDIS_DB = "0"
 
 # Build CORS origin from host configuration
-# Note: host validation is handled by configure-module action
 host = data.get("host", "")
 if host:
     if data.get("lets_encrypt"):
@@ -39,29 +37,46 @@ if host:
     else:
         CORS_ORIGIN = f"http://{host},https://{host}"
 else:
-    # Default CORS for initial setup
     CORS_ORIGIN = "http://localhost:3000"
 
 # Create database environment file
-database_env = f"""POSTGRES_DB=patchmon_db
-POSTGRES_PASSWORD={POSTGRES_PASSWORD}
-POSTGRES_USER=patchmon_user
-"""
+database = {
+    "POSTGRES_DB": "patchmon_db",
+    "POSTGRES_PASSWORD": POSTGRES_PASSWORD,
+    "POSTGRES_USER": "patchmon_user",
+}
+agent.write_envfile("database.env", database)
 
-# Create backend environment file
-backend_env = f"""DATABASE_URL={DATABASE_URL}
-REDIS_HOST={REDIS_HOST}
-REDIS_PORT={REDIS_PORT}
-JWT_SECRET={JWT_SECRET}
-CORS_ORIGIN={CORS_ORIGIN}
-NODE_ENV=production
-"""
+# Create backend environment file with all configuration options
+backend = {
+    "DATABASE_URL": DATABASE_URL,
+    "REDIS_HOST": REDIS_HOST,
+    "REDIS_PORT": REDIS_PORT,
+    "REDIS_PASSWORD": REDIS_PASSWORD,
+    "REDIS_DB": REDIS_DB,
+    "JWT_SECRET": JWT_SECRET,
+    "CORS_ORIGIN": CORS_ORIGIN,
+    "NODE_ENV": "production",
+    "LOG_LEVEL": "info",
+    "SERVER_HOST": "0.0.0.0",
+    "SERVER_PORT": "3001",
+    "SERVER_PROTOCOL": "http",
+    "DB_CONNECTION_LIMIT": "30",
+    "DB_CONNECT_TIMEOUT": "10",
+    "DB_POOL_TIMEOUT": "20",
+    "DB_IDLE_TIMEOUT": "300",
+    "DB_MAX_LIFETIME": "1800",
+    "RATE_LIMIT_WINDOW_MS": "900000",
+    "RATE_LIMIT_MAX": "5000",
+    "AUTH_RATE_LIMIT_WINDOW_MS": "600000",
+    "AUTH_RATE_LIMIT_MAX": "500",
+    "AGENT_RATE_LIMIT_WINDOW_MS": "60000",
+    "AGENT_RATE_LIMIT_MAX": "1000",
+}
+agent.write_envfile("backend.env", backend)
 
-# Write environment files
-with open(os.path.join(state_dir, 'database.env'), 'w') as f:
-    f.write(database_env)
-
-with open(os.path.join(state_dir, 'backend.env'), 'w') as f:
-    f.write(backend_env)
+# Create empty frontend environment file
+frontend = {}
+agent.write_envfile("frontend.env", frontend)
 
 print("Environment variables configured successfully", file=sys.stderr)

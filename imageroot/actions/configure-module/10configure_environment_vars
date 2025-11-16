@@ -8,66 +8,58 @@
 import json
 import sys
 import agent
+import os
 
-# Try to parse the stdin as JSON.
-# If parsing fails, output everything to stderr
+# Parse input data from stdin
 data = json.load(sys.stdin)
 
-#This is specific to you module, so you need to change it accordingly.
-#agent.dump_env()
- 
-redis = { 
-} 
-agent.write_envfile("redis.env", redis) 
-LOG_LEVEL = data.get("LOG_LEVEL", "info") 
-SERVER_PORT = data.get("SERVER_PORT", "3000") 
-RATE_LIMIT_WINDOW_MS = data.get("RATE_LIMIT_WINDOW_MS", "900000") 
-RATE_LIMIT_MAX = data.get("RATE_LIMIT_MAX", "5000") 
-AUTH_RATE_LIMIT_WINDOW_MS = data.get("AUTH_RATE_LIMIT_WINDOW_MS", "600000") 
-AUTH_RATE_LIMIT_MAX = data.get("AUTH_RATE_LIMIT_MAX", "500") 
-AGENT_RATE_LIMIT_MAX = data.get("AGENT_RATE_LIMIT_MAX", "1000") 
-REDIS_HOST = data.get("REDIS_HOST", "redis") 
-JWT_SECRET = data.get("JWT_SECRET", "") 
-DB_CONNECTION_LIMIT = data.get("DB_CONNECTION_LIMIT", "30") 
-DB_CONNECT_TIMEOUT = data.get("DB_CONNECT_TIMEOUT", "10") 
-DB_MAX_LIFETIME = data.get("DB_MAX_LIFETIME", "1800") 
-REDIS_PASSWORD = data.get("REDIS_PASSWORD", "3ds3wJX3P3imhT56Jg") 
-REDIS_DB = data.get("REDIS_DB", "0") 
-DATABASE_URL = data.get("DATABASE_URL", "postgresql://patchmon_user:G29jmyQ5t7WJiX2knN@database:5432/patchmon_db") 
-SERVER_PROTOCOL = data.get("SERVER_PROTOCOL", "http") 
-CORS_ORIGIN = data.get("CORS_ORIGIN", "http://localhost:3000") 
-DB_IDLE_TIMEOUT = data.get("DB_IDLE_TIMEOUT", "300") 
-AGENT_RATE_LIMIT_WINDOW_MS = data.get("AGENT_RATE_LIMIT_WINDOW_MS", "60000") 
-REDIS_PORT = data.get("REDIS_PORT", "6379") 
-SERVER_HOST = data.get("SERVER_HOST", "localhost") 
-DB_POOL_TIMEOUT = data.get("DB_POOL_TIMEOUT", "20") 
- 
-backend = { 
- "LOG_LEVEL" : LOG_LEVEL ,
- "SERVER_PORT" : SERVER_PORT ,
- "RATE_LIMIT_WINDOW_MS" : RATE_LIMIT_WINDOW_MS ,
- "RATE_LIMIT_MAX" : RATE_LIMIT_MAX ,
- "AUTH_RATE_LIMIT_WINDOW_MS" : AUTH_RATE_LIMIT_WINDOW_MS ,
- "AUTH_RATE_LIMIT_MAX" : AUTH_RATE_LIMIT_MAX ,
- "AGENT_RATE_LIMIT_MAX" : AGENT_RATE_LIMIT_MAX ,
- "REDIS_HOST" : REDIS_HOST ,
- "JWT_SECRET" : JWT_SECRET ,
- "DB_CONNECTION_LIMIT" : DB_CONNECTION_LIMIT ,
- "DB_CONNECT_TIMEOUT" : DB_CONNECT_TIMEOUT ,
- "DB_MAX_LIFETIME" : DB_MAX_LIFETIME ,
- "REDIS_PASSWORD" : REDIS_PASSWORD ,
- "REDIS_DB" : REDIS_DB ,
- "DATABASE_URL" : DATABASE_URL ,
- "SERVER_PROTOCOL" : SERVER_PROTOCOL ,
- "CORS_ORIGIN" : CORS_ORIGIN ,
- "DB_IDLE_TIMEOUT" : DB_IDLE_TIMEOUT ,
- "AGENT_RATE_LIMIT_WINDOW_MS" : AGENT_RATE_LIMIT_WINDOW_MS ,
- "REDIS_PORT" : REDIS_PORT ,
- "SERVER_HOST" : SERVER_HOST ,
- "DB_POOL_TIMEOUT" : DB_POOL_TIMEOUT ,
-} 
-agent.write_envfile("backend.env", backend) 
- 
-frontend = { 
-} 
-agent.write_envfile("frontend.env", frontend) 
+# Get state directory
+state_dir = os.environ.get("AGENT_STATE_DIR", "")
+backend_env_path = os.path.join(state_dir, 'backend.env')
+
+# Update CORS origin when hostname is reconfigured
+host = data.get("host", "")
+if host and os.path.exists(backend_env_path):
+    # Build CORS origin based on Let's Encrypt setting
+    if data.get("lets_encrypt"):
+        cors_origin = f"https://{host}"
+    else:
+        # Allow both HTTP and HTTPS when not using Let's Encrypt
+        cors_origin = f"http://{host},https://{host}"
+    
+    # Read existing backend.env preserving all variables
+    env_vars = {}
+    with open(backend_env_path, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if line and '=' in line and not line.startswith('#'):
+                key, value = line.split('=', 1)
+                env_vars[key] = value
+    
+    # Update only CORS_ORIGIN, preserving DATABASE_URL, JWT_SECRET, REDIS_HOST, etc.
+    env_vars['CORS_ORIGIN'] = cors_origin
+    
+    # Write back to file
+    with open(backend_env_path, 'w') as f:
+        for key, value in env_vars.items():
+            f.write(f'{key}={value}\n')
+    
+    print(f"Updated CORS_ORIGIN to: {cors_origin}", file=sys.stderr)
+
+# Configure Traefik routing
+response = agent.tasks.run(
+    agent_id=agent.resolve_agent_id('traefik@node'),
+    action='set-route',
+    data={
+        'instance': os.environ['MODULE_ID'],
+        'url': f'http://127.0.0.1:{os.environ["TCP_PORT"]}',
+        'http2https': data.get('http2https', True),
+        'lets_encrypt': data.get('lets_encrypt', False),
+        'host': host,
+    },
+)
+
+# Check if traefik configuration was successful
+agent.assert_exp(response['exit_code'] == 0)
+
+print("Module reconfigured successfully", file=sys.stderr)
