@@ -8,80 +8,66 @@
 import json
 import sys
 import agent
-import os
 
 # Try to parse the stdin as JSON.
+# If parsing fails, output everything to stderr
 data = json.load(sys.stdin)
 
-# === READ PASSWORDS FROM ENVIRONMENT (set by create-module) ===
-# These should already exist from create-module, don't regenerate!
-POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD", "")
-REDIS_PASSWORD = os.environ.get("REDIS_PASSWORD", "")
-JWT_SECRET = os.environ.get("JWT_SECRET", "")
-
-# Empty redis.env (no specific config needed)
-redis = {} 
-agent.write_envfile("redis.env", redis)
-
-# Configuration from user input or defaults
+#This is specific to you module, so you need to change it accordingly.
+#agent.dump_env()
+ 
+redis = { 
+} 
+agent.write_envfile("redis.env", redis) 
 LOG_LEVEL = data.get("LOG_LEVEL", "info") 
-SERVER_PORT = data.get("SERVER_PORT", "3001")  # ← Corretto: backend usa 3001 non 3000
+SERVER_PORT = data.get("SERVER_PORT", "3000") 
 RATE_LIMIT_WINDOW_MS = data.get("RATE_LIMIT_WINDOW_MS", "900000") 
 RATE_LIMIT_MAX = data.get("RATE_LIMIT_MAX", "5000") 
 AUTH_RATE_LIMIT_WINDOW_MS = data.get("AUTH_RATE_LIMIT_WINDOW_MS", "600000") 
 AUTH_RATE_LIMIT_MAX = data.get("AUTH_RATE_LIMIT_MAX", "500") 
 AGENT_RATE_LIMIT_MAX = data.get("AGENT_RATE_LIMIT_MAX", "1000") 
-
-# Redis configuration - use 127.0.0.1 since containers are in same pod
-REDIS_HOST = data.get("REDIS_HOST", "127.0.0.1")  # ← Corretto
-REDIS_PORT = data.get("REDIS_PORT", "6379") 
-REDIS_DB = data.get("REDIS_DB", "0")
-
-# Database configuration
+REDIS_HOST = data.get("REDIS_HOST", "redis") 
+JWT_SECRET = data.get("JWT_SECRET", "") 
 DB_CONNECTION_LIMIT = data.get("DB_CONNECTION_LIMIT", "30") 
 DB_CONNECT_TIMEOUT = data.get("DB_CONNECT_TIMEOUT", "10") 
 DB_MAX_LIFETIME = data.get("DB_MAX_LIFETIME", "1800") 
-DB_IDLE_TIMEOUT = data.get("DB_IDLE_TIMEOUT", "300")
-DB_POOL_TIMEOUT = data.get("DB_POOL_TIMEOUT", "20")
-
-# Build DATABASE_URL using password from environment
-DATABASE_URL = data.get("DATABASE_URL", f"postgresql://patchmon_user:{POSTGRES_PASSWORD}@127.0.0.1:5432/patchmon_db")
-
-# Server configuration
+REDIS_PASSWORD = data.get("REDIS_PASSWORD", "your-redis-password-here") 
+REDIS_DB = data.get("REDIS_DB", "0") 
+DATABASE_URL = data.get("DATABASE_URL", "postgresql://patchmon_user:REPLACE_YOUR_POSTGRES_PASSWORD_HERE@database:5432/patchmon_db") 
 SERVER_PROTOCOL = data.get("SERVER_PROTOCOL", "http") 
-SERVER_HOST = data.get("SERVER_HOST", "0.0.0.0")
-
-# CORS - update based on configured hostname
-host = data.get("host", "localhost")
-CORS_ORIGIN = data.get("CORS_ORIGIN", f"https://{host}")
-
-# Backend environment variables
+CORS_ORIGIN = data.get("CORS_ORIGIN", "http://localhost:3000") 
+DB_IDLE_TIMEOUT = data.get("DB_IDLE_TIMEOUT", "300") 
+AGENT_RATE_LIMIT_WINDOW_MS = data.get("AGENT_RATE_LIMIT_WINDOW_MS", "60000") 
+REDIS_PORT = data.get("REDIS_PORT", "6379") 
+SERVER_HOST = data.get("SERVER_HOST", "localhost") 
+DB_POOL_TIMEOUT = data.get("DB_POOL_TIMEOUT", "20") 
+ 
 backend = { 
-    "LOG_LEVEL": LOG_LEVEL,
-    "SERVER_PORT": SERVER_PORT,
-    "RATE_LIMIT_WINDOW_MS": RATE_LIMIT_WINDOW_MS,
-    "RATE_LIMIT_MAX": RATE_LIMIT_MAX,
-    "AUTH_RATE_LIMIT_WINDOW_MS": AUTH_RATE_LIMIT_WINDOW_MS,
-    "AUTH_RATE_LIMIT_MAX": AUTH_RATE_LIMIT_MAX,
-    "AGENT_RATE_LIMIT_MAX": AGENT_RATE_LIMIT_MAX,
-    "REDIS_HOST": REDIS_HOST,
-    "JWT_SECRET": JWT_SECRET,
-    "DB_CONNECTION_LIMIT": DB_CONNECTION_LIMIT,
-    "DB_CONNECT_TIMEOUT": DB_CONNECT_TIMEOUT,
-    "DB_MAX_LIFETIME": DB_MAX_LIFETIME,
-    "REDIS_PASSWORD": REDIS_PASSWORD,
-    "REDIS_DB": REDIS_DB,
-    "DATABASE_URL": DATABASE_URL,
-    "SERVER_PROTOCOL": SERVER_PROTOCOL,
-    "CORS_ORIGIN": CORS_ORIGIN,
-    "DB_IDLE_TIMEOUT": DB_IDLE_TIMEOUT,
-    "AGENT_RATE_LIMIT_WINDOW_MS": AGENT_RATE_LIMIT_WINDOW_MS,
-    "REDIS_PORT": REDIS_PORT,
-    "SERVER_HOST": SERVER_HOST,
-    "DB_POOL_TIMEOUT": DB_POOL_TIMEOUT,
+ "LOG_LEVEL" : LOG_LEVEL ,
+ "SERVER_PORT" : SERVER_PORT ,
+ "RATE_LIMIT_WINDOW_MS" : RATE_LIMIT_WINDOW_MS ,
+ "RATE_LIMIT_MAX" : RATE_LIMIT_MAX ,
+ "AUTH_RATE_LIMIT_WINDOW_MS" : AUTH_RATE_LIMIT_WINDOW_MS ,
+ "AUTH_RATE_LIMIT_MAX" : AUTH_RATE_LIMIT_MAX ,
+ "AGENT_RATE_LIMIT_MAX" : AGENT_RATE_LIMIT_MAX ,
+ "REDIS_HOST" : REDIS_HOST ,
+ "JWT_SECRET" : JWT_SECRET ,
+ "DB_CONNECTION_LIMIT" : DB_CONNECTION_LIMIT ,
+ "DB_CONNECT_TIMEOUT" : DB_CONNECT_TIMEOUT ,
+ "DB_MAX_LIFETIME" : DB_MAX_LIFETIME ,
+ "REDIS_PASSWORD" : REDIS_PASSWORD ,
+ "REDIS_DB" : REDIS_DB ,
+ "DATABASE_URL" : DATABASE_URL ,
+ "SERVER_PROTOCOL" : SERVER_PROTOCOL ,
+ "CORS_ORIGIN" : CORS_ORIGIN ,
+ "DB_IDLE_TIMEOUT" : DB_IDLE_TIMEOUT ,
+ "AGENT_RATE_LIMIT_WINDOW_MS" : AGENT_RATE_LIMIT_WINDOW_MS ,
+ "REDIS_PORT" : REDIS_PORT ,
+ "SERVER_HOST" : SERVER_HOST ,
+ "DB_POOL_TIMEOUT" : DB_POOL_TIMEOUT ,
 } 
 agent.write_envfile("backend.env", backend) 
-
-# Frontend environment variables (empty for now)
-frontend = {} 
-agent.write_envfile("frontend.env", frontend)
+ 
+frontend = { 
+} 
+agent.write_envfile("frontend.env", frontend) 

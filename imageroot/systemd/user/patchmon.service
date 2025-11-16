@@ -10,8 +10,8 @@
 
 [Unit]
 Description=Podman patchmon.service
-Requires=database-app.service redis-app.service backend-app.service frontend-app.service 
-Before=database-app.service redis-app.service backend-app.service frontend-app.service 
+Requires=postgres-app.service redis-app.service patchmon-backend-app.service patchmon-frontend-app.service 
+Before=postgres-app.service redis-app.service patchmon-backend-app.service patchmon-frontend-app.service 
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n

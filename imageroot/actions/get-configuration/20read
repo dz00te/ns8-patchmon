@@ -32,7 +32,7 @@ if os.path.exists("database.env"):
 else: 
 	config["POSTGRES_DB"] = "patchmon_db" 
 	config["POSTGRES_USER"] = "patchmon_user" 
-	config["POSTGRES_PASSWORD"] = "G29jmyQ5t7WJiX2knN" 
+	config["POSTGRES_PASSWORD"] = "" 
  
 if os.path.exists("redis.env"): 
 	data = agent.read_envfile("redis.env") 
@@ -53,9 +53,9 @@ if os.path.exists("backend.env"):
 	config["DB_CONNECTION_LIMIT"] = data.get("DB_CONNECTION_LIMIT", "30") 
 	config["DB_CONNECT_TIMEOUT"] = data.get("DB_CONNECT_TIMEOUT", "10") 
 	config["DB_MAX_LIFETIME"] = data.get("DB_MAX_LIFETIME", "1800") 
-	config["REDIS_PASSWORD"] = data.get("REDIS_PASSWORD", "3ds3wJX3P3imhT56Jg") 
+	config["REDIS_PASSWORD"] = data.get("REDIS_PASSWORD", "your-redis-password-here") 
 	config["REDIS_DB"] = data.get("REDIS_DB", "0") 
-	config["DATABASE_URL"] = data.get("DATABASE_URL", "postgresql://patchmon_user:G29jmyQ5t7WJiX2knN@database:5432/patchmon_db") 
+	config["DATABASE_URL"] = data.get("DATABASE_URL", "postgresql://patchmon_user:REPLACE_YOUR_POSTGRES_PASSWORD_HERE@database:5432/patchmon_db") 
 	config["SERVER_PROTOCOL"] = data.get("SERVER_PROTOCOL", "http") 
 	config["CORS_ORIGIN"] = data.get("CORS_ORIGIN", "http://localhost:3000") 
 	config["DB_IDLE_TIMEOUT"] = data.get("DB_IDLE_TIMEOUT", "300") 
@@ -74,9 +74,9 @@ else:
 	config["DB_CONNECTION_LIMIT"] = "30" 
 	config["DB_CONNECT_TIMEOUT"] = "10" 
 	config["DB_MAX_LIFETIME"] = "1800" 
-	config["REDIS_PASSWORD"] = "3ds3wJX3P3imhT56Jg" 
+	config["REDIS_PASSWORD"] = "your-redis-password-here" 
 	config["REDIS_DB"] = "0" 
-	config["DATABASE_URL"] = "postgresql://patchmon_user:G29jmyQ5t7WJiX2knN@database:5432/patchmon_db" 
+	config["DATABASE_URL"] = "postgresql://patchmon_user:REPLACE_YOUR_POSTGRES_PASSWORD_HERE@database:5432/patchmon_db" 
 	config["SERVER_PROTOCOL"] = "http" 
 	config["CORS_ORIGIN"] = "http://localhost:3000" 
 	config["DB_IDLE_TIMEOUT"] = "300" 
