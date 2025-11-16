@@ -45,7 +45,7 @@ buildah config --entrypoint=/ \
     --label="org.nethserver.authorizations=traefik@node:routeadm" \
     --label="org.nethserver.tcp-ports-demand=1" \
     --label="org.nethserver.rootfull=0" \
-    --label="org.nethserver.images=docker.io/postgres:17-alpine docker.io/redis:7-alpine ghcr.io/patchmon/patchmon-backend:latest ghcr.io/patchmon/patchmon-frontend:latest" \
+    --label="org.nethserver.images=docker.io/postgres:17-alpine docker.io/redis:7-alpine ghcr.io/patchmon/patchmon-backend:1.3.3 ghcr.io/patchmon/patchmon-frontend:1.3.3" \
     "${container}"
 # Commit the image
 buildah commit "${container}" "${repobase}/${reponame}"
