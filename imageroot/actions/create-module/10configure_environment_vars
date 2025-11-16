@@ -8,77 +8,36 @@
 import json
 import sys
 import agent
-import secrets
 import os
+import secrets
 
-# Parse input (will be empty during create-module, that's OK)
 data = json.load(sys.stdin)
 
-# === TCP PORT ===
-# The port is already allocated by NS8 and available as environment variable
-# DO NOT call agent.allocate_ports() - it causes 403 Forbidden
-tcp_port = os.environ.get("TCP_PORT", "20000")  # Fallback should never be needed
-agent.set_env("TCP_PORT", tcp_port)
+# === GENERATE SECURE PASSWORDS ONCE ===
+def generate_random_password(length=32):
+    return secrets.token_urlsafe(length)
 
-# === GENERATE SECURE PASSWORDS ===
-# Use secrets module for cryptographically secure random values
-postgres_password = secrets.token_urlsafe(32)
-redis_password = secrets.token_urlsafe(32)
-jwt_secret = secrets.token_hex(64)  # 128 characters hex
+# PostgreSQL configuration
+POSTGRES_DB = data.get("POSTGRES_DB", "patchmon_db") 
+POSTGRES_USER = data.get("POSTGRES_USER", "patchmon_user") 
+POSTGRES_PASSWORD = data.get("POSTGRES_PASSWORD", generate_random_password())
 
-# === POSTGRESQL CONFIGURATION ===
-# PatchMon uses PostgreSQL 17
-postgres_db = "patchmon_db"
-postgres_user = "patchmon_user"
+# Save to environment so configure-module can use them
+agent.set_env("POSTGRES_DB", POSTGRES_DB)
+agent.set_env("POSTGRES_USER", POSTGRES_USER)
+agent.set_env("POSTGRES_PASSWORD", POSTGRES_PASSWORD)
 
-agent.set_env("POSTGRES_DB", postgres_db)
-agent.set_env("POSTGRES_USER", postgres_user)
-agent.set_env("POSTGRES_PASSWORD", postgres_password)
+# Generate other secrets
+REDIS_PASSWORD = generate_random_password()
+JWT_SECRET = secrets.token_hex(64)  # 128 char hex string
 
-# Build DATABASE_URL for backend
-# Format: postgresql://user:password@host:port/database
-database_url = f"postgresql://{postgres_user}:{postgres_password}@127.0.0.1:5432/{postgres_db}"
-agent.set_env("DATABASE_URL", database_url)
+agent.set_env("REDIS_PASSWORD", REDIS_PASSWORD)
+agent.set_env("JWT_SECRET", JWT_SECRET)
 
-# === REDIS CONFIGURATION ===
-agent.set_env("REDIS_PASSWORD", redis_password)
-agent.set_env("REDIS_HOST", "127.0.0.1")
-agent.set_env("REDIS_PORT", "6379")
-agent.set_env("REDIS_DB", "0")
-
-# === APPLICATION SECRETS ===
-agent.set_env("JWT_SECRET", jwt_secret)
-
-# === DOCKER IMAGES ===
-# Use exact versions from PatchMon docker-compose.yml
-agent.set_env("POSTGRES_IMAGE", "docker.io/library/postgres:17-alpine")
-agent.set_env("REDIS_IMAGE", "docker.io/library/redis:alpine")
-agent.set_env("PATCHMON_BACKEND_IMAGE", "ghcr.io/patchmon/patchmon-backend:latest")
-agent.set_env("PATCHMON_FRONTEND_IMAGE", "ghcr.io/patchmon/patchmon-frontend:latest")
-
-# === APPLICATION DEFAULTS ===
-# Backend runs on port 3001, frontend on 3000
-agent.set_env("LOG_LEVEL", "info")
-agent.set_env("SERVER_PORT", "3001")
-agent.set_env("SERVER_HOST", "0.0.0.0")
-agent.set_env("SERVER_PROTOCOL", "http")
-
-# Rate limiting defaults (from PatchMon environment variables)
-agent.set_env("RATE_LIMIT_WINDOW_MS", "900000")
-agent.set_env("RATE_LIMIT_MAX", "5000")
-agent.set_env("AUTH_RATE_LIMIT_WINDOW_MS", "600000")
-agent.set_env("AUTH_RATE_LIMIT_MAX", "500")
-agent.set_env("AGENT_RATE_LIMIT_WINDOW_MS", "60000")
-agent.set_env("AGENT_RATE_LIMIT_MAX", "1000")
-
-# Database pool configuration
-agent.set_env("DB_CONNECTION_LIMIT", "30")
-agent.set_env("DB_CONNECT_TIMEOUT", "10")
-agent.set_env("DB_MAX_LIFETIME", "1800")
-agent.set_env("DB_IDLE_TIMEOUT", "300")
-agent.set_env("DB_POOL_TIMEOUT", "20")
-
-# CORS - will be updated by configure-module when hostname is set
-agent.set_env("CORS_ORIGIN", "http://localhost:3000")
-agent.set_env("NEXT_PUBLIC_API_URL", "http://localhost:3001")
-
+# Write database.env for systemd
+database = { 
+    "POSTGRES_DB": POSTGRES_DB,
+    "POSTGRES_USER": POSTGRES_USER,
+    "POSTGRES_PASSWORD": POSTGRES_PASSWORD,
+} 
+agent.write_envfile("database.env", database)

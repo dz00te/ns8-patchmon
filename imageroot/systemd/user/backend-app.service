@@ -18,37 +18,7 @@ TimeoutStopSec=70
 ExecStartPre=/bin/mkdir -p tmp
 ExecStartPre=/bin/rm -f %t/backend-app.pid %t/backend-app.ctr-id
 ExecStartPre=-runagent discover-smarthost
-ExecStart=/usr/bin/podman run \
-  --conmon-pidfile %t/backend-app.pid \
-  --cidfile %t/backend-app.ctr-id \
-  --cgroups=no-conmon \
-  --pod-id-file %t/patchmon.pod-id \
-  --replace -d \
-  --name backend-app \
-  --volume patchmon-agentfiles.volume:/app/agents:Z \
-  -e DATABASE_URL=${DATABASE_URL} \
-  -e REDIS_HOST=${REDIS_HOST} \
-  -e REDIS_PORT=${REDIS_PORT} \
-  -e REDIS_PASSWORD=${REDIS_PASSWORD} \
-  -e REDIS_DB=${REDIS_DB} \
-  -e JWT_SECRET=${JWT_SECRET} \
-  -e LOG_LEVEL=${LOG_LEVEL} \
-  -e SERVER_PORT=${SERVER_PORT} \
-  -e SERVER_HOST=${SERVER_HOST} \
-  -e SERVER_PROTOCOL=${SERVER_PROTOCOL} \
-  -e CORS_ORIGIN=${CORS_ORIGIN} \
-  -e RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS} \
-  -e RATE_LIMIT_MAX=${RATE_LIMIT_MAX} \
-  -e AUTH_RATE_LIMIT_WINDOW_MS=${AUTH_RATE_LIMIT_WINDOW_MS} \
-  -e AUTH_RATE_LIMIT_MAX=${AUTH_RATE_LIMIT_MAX} \
-  -e AGENT_RATE_LIMIT_WINDOW_MS=${AGENT_RATE_LIMIT_WINDOW_MS} \
-  -e AGENT_RATE_LIMIT_MAX=${AGENT_RATE_LIMIT_MAX} \
-  -e DB_CONNECTION_LIMIT=${DB_CONNECTION_LIMIT} \
-  -e DB_CONNECT_TIMEOUT=${DB_CONNECT_TIMEOUT} \
-  -e DB_MAX_LIFETIME=${DB_MAX_LIFETIME} \
-  -e DB_IDLE_TIMEOUT=${DB_IDLE_TIMEOUT} \
-  -e DB_POOL_TIMEOUT=${DB_POOL_TIMEOUT} \
-  ${PATCHMON_BACKEND_IMAGE}
+ExecStart=/usr/bin/podman run --conmon-pidfile %t/backend-app.pid  --cidfile %t/backend-app.ctr-id --cgroups=no-conmon  --pod-id-file %t/patchmon.pod-id --replace -d --name  backend-app  --volume agentfiles:/app/agents:Z   --env-file backend.env  ${PATCHMON_BACKEND_IMAGE}  
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/backend-app.ctr-id -t 10
 ExecReload=/usr/bin/podman kill -s HUP backend-app
 SyslogIdentifier=%u
