@@ -75,8 +75,13 @@ backend = {
 }
 agent.write_envfile("backend.env", backend)
 
+# Create empty redis environment file (required by redis-app.service)
+redis = {}
+agent.write_envfile("redis.env", redis)
+
 # Create empty frontend environment file
 frontend = {}
 agent.write_envfile("frontend.env", frontend)
 
 print("Environment variables configured successfully", file=sys.stderr)
+
