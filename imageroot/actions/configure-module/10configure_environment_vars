@@ -8,72 +8,25 @@
 import json
 import sys
 import agent
-import secrets
 import os
 
-# Parse input JSON
+# Parse user input
 data = json.load(sys.stdin)
 
-# Generate secure random passwords and secrets
-postgres_password = secrets.token_urlsafe(32)
-redis_password = secrets.token_urlsafe(32)
-jwt_secret = secrets.token_hex(64)  # 128 characters hex string
+# Update ONLY user-configurable settings
+# Passwords remain unchanged from create-module
 
-# PostgreSQL configuration
-postgres_db = "patchmon_db"
-postgres_user = "patchmon_user"
+# Update application settings if provided by user
+if "LOG_LEVEL" in data:
+    agent.set_env("LOG_LEVEL", data["LOG_LEVEL"])
 
-# Build DATABASE_URL for backend
-# Since all containers are in the same pod, use localhost
-database_url = f"postgresql://{postgres_user}:{postgres_password}@127.0.0.1:5432/{postgres_db}"
+# Update CORS/API URLs based on hostname
+# The hostname comes from configure-module input
+host = data.get("host", os.environ.get("TRAEFIK_HOST", "localhost"))
 
-# Set main environment variables that will be used in systemd services
-agent.set_env("POSTGRES_IMAGE", "docker.io/library/postgres:15-alpine")
-agent.set_env("REDIS_IMAGE", "docker.io/library/redis:7-alpine")
-agent.set_env("PATCHMON_BACKEND_IMAGE", "ghcr.io/patchmon/patchmon-backend:latest")
-agent.set_env("PATCHMON_FRONTEND_IMAGE", "ghcr.io/patchmon/patchmon-frontend:latest")
+if host and host != "localhost":
+    agent.set_env("CORS_ORIGIN", f"https://{host}")
+    agent.set_env("NEXT_PUBLIC_API_URL", f"https://{host}/api")
 
-# PostgreSQL credentials
-agent.set_env("POSTGRES_DB", postgres_db)
-agent.set_env("POSTGRES_USER", postgres_user)
-agent.set_env("POSTGRES_PASSWORD", postgres_password)
-
-# Redis configuration
-agent.set_env("REDIS_PASSWORD", redis_password)
-
-# Backend configuration variables
-agent.set_env("DATABASE_URL", database_url)
-agent.set_env("JWT_SECRET", jwt_secret)
-agent.set_env("REDIS_HOST", "127.0.0.1")
-agent.set_env("REDIS_PORT", "6379")
-agent.set_env("REDIS_DB", "0")
-
-# Application configuration from user input or defaults
-agent.set_env("LOG_LEVEL", data.get("LOG_LEVEL", "info"))
-agent.set_env("SERVER_PORT", data.get("SERVER_PORT", "3001"))
-agent.set_env("SERVER_HOST", data.get("SERVER_HOST", "0.0.0.0"))
-agent.set_env("SERVER_PROTOCOL", data.get("SERVER_PROTOCOL", "http"))
-
-# Rate limiting
-agent.set_env("RATE_LIMIT_WINDOW_MS", data.get("RATE_LIMIT_WINDOW_MS", "900000"))
-agent.set_env("RATE_LIMIT_MAX", data.get("RATE_LIMIT_MAX", "5000"))
-agent.set_env("AUTH_RATE_LIMIT_WINDOW_MS", data.get("AUTH_RATE_LIMIT_WINDOW_MS", "600000"))
-agent.set_env("AUTH_RATE_LIMIT_MAX", data.get("AUTH_RATE_LIMIT_MAX", "500"))
-agent.set_env("AGENT_RATE_LIMIT_WINDOW_MS", data.get("AGENT_RATE_LIMIT_WINDOW_MS", "60000"))
-agent.set_env("AGENT_RATE_LIMIT_MAX", data.get("AGENT_RATE_LIMIT_MAX", "1000"))
-
-# Database pool configuration
-agent.set_env("DB_CONNECTION_LIMIT", data.get("DB_CONNECTION_LIMIT", "30"))
-agent.set_env("DB_CONNECT_TIMEOUT", data.get("DB_CONNECT_TIMEOUT", "10"))
-agent.set_env("DB_MAX_LIFETIME", data.get("DB_MAX_LIFETIME", "1800"))
-agent.set_env("DB_IDLE_TIMEOUT", data.get("DB_IDLE_TIMEOUT", "300"))
-agent.set_env("DB_POOL_TIMEOUT", data.get("DB_POOL_TIMEOUT", "20"))
-
-# CORS configuration - build from Traefik host
-host = data.get("host", "localhost")
-cors_origin = f"https://{host}"
-agent.set_env("CORS_ORIGIN", cors_origin)
-
-# Frontend configuration - API URL should point to backend
-# Since frontend runs in browser, it needs to use the public domain
-agent.set_env("NEXT_PUBLIC_API_URL", f"https://{host}/api")
+# DO NOT regenerate passwords or secrets here!
+# They are already set in create-module and must remain unchanged
