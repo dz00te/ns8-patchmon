@@ -14,11 +14,13 @@ import string
 # Parse input data
 data = json.load(sys.stdin)
 
+
 # Generate random secure password for PostgreSQL
 def generate_random_password(length=32):
     """Generate a secure random password with letters, digits, and special characters"""
     alphabet = string.ascii_letters + string.digits
-    return ''.join(secrets.choice(alphabet) for _ in range(length))
+    return "".join(secrets.choice(alphabet) for _ in range(length))
+
 
 # Generate random database password
 POSTGRES_PASSWORD = generate_random_password(32)
@@ -28,10 +30,12 @@ JWT_SECRET = secrets.token_urlsafe(32)
 
 # Build database connection URL with localhost (127.0.0.1)
 # Containers in same pod share network namespace
-DATABASE_URL = f"postgresql://patchmon_user:{POSTGRES_PASSWORD}@127.0.0.1:5432/patchmon_db"
+DATABASE_URL = (
+    f"postgresql://patchmon_user:{POSTGRES_PASSWORD}@database-app:5432/patchmon_db"
+)
 
 # Redis connection (localhost in pod)
-REDIS_HOST = "127.0.0.1"
+REDIS_HOST = "redis-app"
 REDIS_PORT = "6379"
 REDIS_PASSWORD = ""  # No password for local Redis
 REDIS_DB = "0"
@@ -91,4 +95,7 @@ frontend = {}
 agent.write_envfile("frontend.env", frontend)
 
 print("Environment variables configured successfully", file=sys.stderr)
-print(f"Generated random PostgreSQL password (length: {len(POSTGRES_PASSWORD)})", file=sys.stderr)
+print(
+    f"Generated random PostgreSQL password (length: {len(POSTGRES_PASSWORD)})",
+    file=sys.stderr,
+)
