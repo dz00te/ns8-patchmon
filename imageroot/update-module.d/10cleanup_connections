@@ -1,0 +1,39 @@
+#!/bin/bash
+
+#
+# Copyright (C) 2024 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+#
+# Cleanup active connections and processes before update
+# This prevents database migration issues during module updates
+#
+
+set -e
+
+echo "[INFO] Starting pre-update cleanup for PatchMon"
+
+# Kill any running Prisma migration processes
+if podman ps --format "{{.Names}}" | grep -q "backend-app"; then
+    echo "[INFO] Stopping Prisma migrations if running..."
+    podman exec backend-app pkill -9 -f "prisma" 2>/dev/null || true
+    sleep 2
+fi
+
+# Terminate active PostgreSQL connections
+if podman ps --format "{{.Names}}" | grep -q "database-app"; then
+    echo "[INFO] Terminating active database connections..."
+    podman exec database-app psql -U patchmon_user -d patchmon_db -c \
+      "SELECT pg_terminate_backend(pid) FROM pg_stat_activity 
+       WHERE datname = 'patchmon_db' 
+       AND pid <> pg_backend_pid();" 2>/dev/null || true
+fi
+
+# Clear Redis cache to ensure fresh state
+if podman ps --format "{{.Names}}" | grep -q "redis-app"; then
+    echo "[INFO] Flushing Redis cache..."
+    podman exec redis-app redis-cli FLUSHALL 2>/dev/null || true
+fi
+
+echo "[INFO] Pre-update cleanup completed successfully"
