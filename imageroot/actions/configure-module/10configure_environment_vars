@@ -42,6 +42,9 @@ if host and os.path.exists(backend_env_path):
     env_vars['CORS_ORIGIN'] = cors_origin
     env_vars['SERVER_HOST'] = host
     env_vars['SERVER_PORT'] = server_port
+    # NS8 runs behind Traefik reverse proxy
+    env_vars['TRUST_PROXY'] = 'true'
+    env_vars['ENABLE_HSTS'] = 'true'
     
     # Write back to file
     with open(backend_env_path, 'w') as f:
