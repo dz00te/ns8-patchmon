@@ -83,7 +83,7 @@ backend = {
     "AUTH_RATE_LIMIT_MAX": "500",
     "AGENT_RATE_LIMIT_WINDOW_MS": "60000",
     "AGENT_RATE_LIMIT_MAX": "1000",
-    "TRUST_PROXY": "true",
+    "TRUST_PROXY": "1",
     "ENABLE_HSTS": "true",    
 }
 agent.write_envfile("backend.env", backend)
