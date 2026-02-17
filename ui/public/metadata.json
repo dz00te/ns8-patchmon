@@ -1,19 +1,21 @@
 {
-  "name": "patchmon",
+  "name": "PatchMon",
+    "upstream_name": "PatchMon 1.4.1",
   "description": {
-    "en": "My patchmon module"
+    "en": "System monitoring and patch management platform",
+    "it": "Piattaforma di monitoraggio e gestione patch di sistema"
   },
-  "categories": [],
+  "categories": ["system_administration"],
   "authors": [
     {
-      "name": "Name Surname",
-      "email": "author@yourmail.org"
+      "name": "dz00te",
+      "email": "dz00te@framassa.org"
     }
   ],
   "docs": {
-    "documentation_url": "https://docs.patchmon.com/",
-    "bug_url": "https://github.com/NethServer/dev",
-    "code_url": "https://github.com/author/ns8-patchmon"
+    "documentation_url": "https://docs.patchmon.net/",
+    "bug_url": "https://github.com/dz00te/ns8-patchmon/issues",
+    "code_url": "https://github.com/dz00te/ns8-patchmon"
   },
-  "source": "ghcr.io/nethserver/patchmon"
+  "source": "ghcr.io/dz00te/patchmon"
 }
