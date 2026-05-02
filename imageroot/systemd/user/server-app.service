@@ -1,0 +1,35 @@
+#
+# Copyright (C) 2022 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+[Unit]
+Description=Podman server-app.service
+BindsTo=patchmon.service
+After=patchmon.service database-app.service redis-app.service guacd-app.service
+
+[Service]
+Environment=PODMAN_SYSTEMD_UNIT=%n
+EnvironmentFile=%S/state/environment
+WorkingDirectory=%S/state
+Restart=always
+TimeoutStopSec=70
+ExecStartPre=/bin/rm -f %t/server-app.pid %t/server-app.ctr-id
+ExecStart=/usr/bin/podman run \
+  --conmon-pidfile %t/server-app.pid \
+  --cidfile %t/server-app.ctr-id \
+  --cgroups=no-conmon \
+  --pod-id-file %t/patchmon.pod-id \
+  --replace -d \
+  --name server-app \
+  --env-file %S/state/server.env \
+  ${PATCHMON_SERVER_IMAGE}
+ExecStop=/usr/bin/podman stop --ignore --cidfile %t/server-app.ctr-id -t 10
+ExecReload=/usr/bin/podman kill -s HUP server-app
+ExecStopPost=/usr/bin/podman rm --ignore -f --cidfile %t/server-app.ctr-id
+PIDFile=%t/server-app.pid
+Type=forking
+SyslogIdentifier=%u
+
+[Install]
+WantedBy=default.target

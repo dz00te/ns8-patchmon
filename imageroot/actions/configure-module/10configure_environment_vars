@@ -10,65 +10,54 @@ import sys
 import agent
 import os
 
-# Parse input data from stdin
 data = json.load(sys.stdin)
 
-# Get state directory
 state_dir = os.environ.get("AGENT_STATE_DIR", "")
-backend_env_path = os.path.join(state_dir, 'backend.env')
+server_env_path = os.path.join(state_dir, "server.env")
 
-# Update backend.env when hostname is reconfigured
 host = data.get("host", "")
-if host and os.path.exists(backend_env_path):
-    # Read existing backend.env preserving all variables
+
+if host and os.path.exists(server_env_path):
     env_vars = {}
-    with open(backend_env_path, 'r') as f:
+    with open(server_env_path, "r") as f:
         for line in f:
             line = line.strip()
-            if line and '=' in line and not line.startswith('#'):
-                key, value = line.split('=', 1)
+            if line and "=" in line and not line.startswith("#"):
+                key, value = line.split("=", 1)
                 env_vars[key] = value
-    
-    # Build CORS origin based on Let's Encrypt setting
+
     if data.get("lets_encrypt"):
         cors_origin = f"https://{host}"
-        server_port = "443"
     else:
-        # Allow both HTTP and HTTPS when not using Let's Encrypt
         cors_origin = f"http://{host},https://{host}"
-        server_port = "80"
-    
-    # Update CORS_ORIGIN, SERVER_HOST, and SERVER_PORT
-    env_vars['CORS_ORIGIN'] = cors_origin
-    env_vars['SERVER_HOST'] = host
-    env_vars['SERVER_PORT'] = server_port
-    # NS8 runs behind Traefik reverse proxy
-    env_vars['TRUST_PROXY'] = '1'
-    env_vars['ENABLE_HSTS'] = 'true'
-    
-    # Write back to file
-    with open(backend_env_path, 'w') as f:
+
+    env_vars["CORS_ORIGIN"] = cors_origin
+    env_vars["TRUST_PROXY"] = "true"
+    env_vars["ENABLE_HSTS"] = "true"
+
+    with open(server_env_path, "w") as f:
         for key, value in env_vars.items():
-            f.write(f'{key}={value}\n')
-    
+            f.write(f"{key}={value}\n")
+
     print(f"Updated CORS_ORIGIN to: {cors_origin}", file=sys.stderr)
-    print(f"Updated SERVER_HOST to: {host}", file=sys.stderr)
-    print(f"Updated SERVER_PORT to: {server_port}", file=sys.stderr)
 
 # Configure Traefik routing
+agent.set_env("TRAEFIK_HOST", host)
+agent.set_env("TRAEFIK_HTTP2HTTPS", data.get("http2https", True))
+agent.set_env("TRAEFIK_LETS_ENCRYPT", data.get("lets_encrypt", False))
+agent.dump_env()
+
 response = agent.tasks.run(
-    agent_id=agent.resolve_agent_id('traefik@node'),
-    action='set-route',
+    agent_id=agent.resolve_agent_id("traefik@node"),
+    action="set-route",
     data={
-        'instance': os.environ['MODULE_ID'],
-        'url': f'http://127.0.0.1:{os.environ["TCP_PORT"]}',
-        'http2https': data.get('http2https', True),
-        'lets_encrypt': data.get('lets_encrypt', False),
-        'host': host,
+        "instance": os.environ["MODULE_ID"],
+        "url": f'http://127.0.0.1:{os.environ["TCP_PORT"]}',
+        "http2https": data.get("http2https", True),
+        "lets_encrypt": data.get("lets_encrypt", False),
+        "host": host,
     },
 )
 
-# Check if traefik configuration was successful
-agent.assert_exp(response['exit_code'] == 0)
-
+agent.assert_exp(response["exit_code"] == 0)
 print("Module reconfigured successfully", file=sys.stderr)

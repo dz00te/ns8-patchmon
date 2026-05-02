@@ -6,48 +6,80 @@
 #
 
 #
-# Ensure new environment variables are present in backend.env
-# after a module update. Existing values are never overwritten.
+# Ensure new environment variables are present in server.env after a module update.
+# Existing values are never overwritten.
+# Also handles migration from legacy backend.env (v1.4.x) to server.env (v2.x).
 #
 
 import os
 import sys
-
-# Default values for variables that may be missing in older installations.
-# Add new entries here when future PatchMon versions require them.
-DEFAULTS = {
-    "TRUST_PROXY": "1",
-    "ENABLE_HSTS": "true",
-}
+import secrets
 
 state_dir = os.environ.get("AGENT_STATE_DIR", "")
+server_env_path = os.path.join(state_dir, "server.env")
 backend_env_path = os.path.join(state_dir, "backend.env")
 
-if not os.path.exists(backend_env_path):
-    print("[INFO] backend.env not found, skipping env update", file=sys.stderr)
+# Migrate from backend.env to server.env if needed
+if not os.path.exists(server_env_path) and os.path.exists(backend_env_path):
+    print("[INFO] Migrating backend.env -> server.env", file=sys.stderr)
+    env_vars = {}
+    with open(backend_env_path, "r") as f:
+        for line in f:
+            line = line.strip()
+            if line and "=" in line and not line.startswith("#"):
+                key, value = line.split("=", 1)
+                env_vars[key] = value
+    # Remove Node.js-only variables
+    for key in ["NODE_ENV", "DB_IDLE_TIMEOUT", "DB_MAX_LIFETIME",
+                "DB_POOL_TIMEOUT", "SERVER_HOST", "SERVER_PORT", "SERVER_PROTOCOL"]:
+        env_vars.pop(key, None)
+    with open(server_env_path, "w") as f:
+        for key, value in env_vars.items():
+            f.write(f"{key}={value}\n")
+    print("[INFO] Migration complete", file=sys.stderr)
+
+if not os.path.exists(server_env_path):
+    print("[INFO] server.env not found, skipping", file=sys.stderr)
     sys.exit(0)
 
 # Read existing variables
 env_vars = {}
-with open(backend_env_path, "r") as f:
+with open(server_env_path, "r") as f:
     for line in f:
         line = line.strip()
         if line and "=" in line and not line.startswith("#"):
             key, value = line.split("=", 1)
             env_vars[key] = value
 
-# Add missing variables with defaults
 added = []
-for key, default_value in DEFAULTS.items():
+
+# Static defaults — added only if missing
+DEFAULTS = {
+    "TRUST_PROXY":             "true",
+    "ENABLE_HSTS":             "true",
+    "GUACD_ADDRESS":           "127.0.0.1:4822",
+    "AGENT_UPDATE_BODY_LIMIT": "5mb",
+}
+for key, value in DEFAULTS.items():
     if key not in env_vars:
-        env_vars[key] = default_value
+        env_vars[key] = value
         added.append(key)
 
+# Generated secrets — created if missing, never overwritten
+for key in ["SESSION_SECRET", "AI_ENCRYPTION_KEY"]:
+    if key not in env_vars:
+        env_vars[key] = secrets.token_hex(64)
+        added.append(key)
+
+# Fix legacy TRUST_PROXY value
+if env_vars.get("TRUST_PROXY") == "1":
+    env_vars["TRUST_PROXY"] = "true"
+    added.append("TRUST_PROXY (updated from '1' to 'true')")
+
 if added:
-    # Write back
-    with open(backend_env_path, "w") as f:
+    with open(server_env_path, "w") as f:
         for key, value in env_vars.items():
             f.write(f"{key}={value}\n")
-    print(f"[INFO] Added missing env vars: {', '.join(added)}", file=sys.stderr)
+    print(f"[INFO] Updated env vars: {', '.join(added)}", file=sys.stderr)
 else:
     print("[INFO] All env vars already present, nothing to update", file=sys.stderr)
