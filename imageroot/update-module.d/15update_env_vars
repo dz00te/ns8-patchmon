@@ -59,6 +59,7 @@ DEFAULTS = {
     "ENABLE_HSTS":             "true",
     "GUACD_ADDRESS":           "127.0.0.1:4822",
     "AGENT_UPDATE_BODY_LIMIT": "5mb",
+    "ENABLE_LOGGING":          "true",
 }
 for key, value in DEFAULTS.items():
     if key not in env_vars:

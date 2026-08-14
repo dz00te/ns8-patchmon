@@ -22,6 +22,7 @@ ExecStart=/usr/bin/podman run \
   --pod-id-file %t/patchmon.pod-id \
   --replace -d \
   --name guacd-app \
+  --hostname guacd \
   --read-only \
   --tmpfs /tmp:size=64m \
   --security-opt no-new-privileges \
