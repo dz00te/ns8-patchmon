@@ -1,0 +1,5 @@
+#!/bin/bash
+#
+# Remove volumes left over from PatchMon 1.x (not used since 2.0)
+#
+podman volume rm agentfiles 2>/dev/null && echo "[INFO] Removed legacy volume agentfiles" || true

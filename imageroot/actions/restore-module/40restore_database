@@ -7,11 +7,17 @@
 
 set -e -o pipefail
 exec 1>&2 # Redirect any output to the journal (stderr)
+
+if [[ ! -f database.pg_dump ]]; then
+	echo "[ERROR] database.pg_dump not found in restored state, cannot restore PatchMon database"
+	exit 1
+fi
+
 # Create restore directory
 mkdir -vp restore
 
 # Create restore script
-cat - >restore/monica_restore.sh <<'EOS'
+cat - >restore/patchmon_restore.sh <<'EOS'
 # Read dump file from standard input:
 pg_restore --no-owner --no-privileges -U patchmon_user -d patchmon_db
 ec=$?
@@ -25,7 +31,7 @@ podman run \
 	--interactive \
 	--network=none \
 	--volume=./restore:/docker-entrypoint-initdb.d/:Z \
-	--volume=postgres-data:/var/lib/postgresql/data:Z \
+	--volume=postgresdata:/var/lib/postgresql/data:Z \
 	--replace --name=restore_db \
 	--env-file database.env \
 	"${POSTGRES_IMAGE}" <database.pg_dump
