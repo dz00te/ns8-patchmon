@@ -1,0 +1,13 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["local>NethServer/.github:ns8"],
+  "packageRules": [
+    {
+      "description": "Major upgrades of postgres and redis need a manual migration",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["/(^|/)postgres$/", "/(^|/)redis$/"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    }
+  ]
+}
