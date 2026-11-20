@@ -1,19 +1,28 @@
 name: "Clean up registry"
-
 on:
   delete:
   workflow_dispatch:
-
 permissions:
   packages: write
-
 jobs:
   delete_images:
     name: "Delete ghcr.io images ${{ github.event.ref }}"
+    if: github.event.ref_type == 'branch'
     runs-on: ubuntu-latest
-    environment: Registry
     steps:
-      - uses: NethServer/ns8-github-actions/.github/actions/delete-image@v1
-        with:
-          images: "patchmon"
-          delete_image_token: ${{ secrets.IMAGES_CLEANUP_TOKEN }}
+      - name: Delete branch image
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REF: ${{ github.event.ref }}
+        run: |
+          ref=${REF//\//-}
+          for image in patchmon; do
+            versions_path="/users/dz00te/packages/container/${image}/versions"
+            version_id=$(gh api --paginate -q ".[] | select(.metadata.container.tags == [\"${ref}\"]) | .id" "${versions_path}")
+            if [[ -n "${version_id}" ]]; then
+              gh api --input /dev/null -X DELETE "${versions_path}/${version_id}"
+              echo "::notice::DELETE ${versions_path}/${version_id}"
+            else
+              echo "::notice::No image tagged ${ref}"
+            fi
+          done
