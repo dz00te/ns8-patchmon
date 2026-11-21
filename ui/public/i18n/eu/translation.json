@@ -9,13 +9,23 @@
         "network_timeout": "Sarearen denbora-muga",
         "404": "Baliabidea ez da aurkitu",
         "network_error": "Sare-errorea",
-        "validation_error": "Balioztatze-errorea"
+        "validation_error": "Balioztatze-errorea",
+        "cannot_retrieve_configuration": "Cannot retrieve configuration"
     },
     "settings": {
-        "test_field": "Proba-eremua",
         "configure_instance": "{instance} konfiguratu",
         "save": "Gorde",
-        "title": "Ezarpenak"
+        "title": "Ezarpenak",
+        "patchmon_fqdn": "patchmon hostname (FQDN)",
+        "lets_encrypt": "Request LE Certificate",
+        "http_to_https": "Force HTTPS",
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "configuring": "Configuring",
+        "instance_configuration": "Configure patchmon",
+        "domain_already_used_in_traefik": "Domain already used in traefik",
+        "host_pattern": "Must be a valid fully qualified domain name",
+        "host_format": "Must be a valid fully qualified domain name"
     },
     "common": {
         "required": "Beharrezkoa",
@@ -36,7 +46,11 @@
         "title": "Egoera",
         "installation_node": "Instalazio-nodoa",
         "node": "Nodoa",
-        "no_volumes": "Bolumenik ez"
+        "no_volumes": "Bolumenik ez",
+        "patchmon_webapp": "patchmon webapp",
+        "not_configured": "Not configured",
+        "open_webapp": "Open patchmon",
+        "configure": "Configure"
     },
     "about": {
         "title": "Honi buruz"

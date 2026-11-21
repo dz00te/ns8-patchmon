@@ -14,6 +14,9 @@ images=()
 repobase="${REPOBASE:-ghcr.io/dz00te}"
 # Configure the image name
 reponame="patchmon"
+# Node.js 25+ no longer ships Corepack, install it from npm
+# renovate: datasource=npm packageName=corepack
+corepack_version=0.36.0
 
 # Create a new empty container image
 container=$(buildah from scratch)
@@ -21,7 +24,8 @@ container=$(buildah from scratch)
 # Reuse existing nodebuilder-patchmon container, to speed up builds
 if ! buildah containers --format "{{.ContainerName}}" | grep -q nodebuilder-patchmon; then
     echo "Pulling NodeJS runtime..."
-    buildah from --name nodebuilder-patchmon -v "${PWD}:/usr/src:Z" docker.io/library/node:26.13.0-slim
+    buildah from --name nodebuilder-patchmon -v "${PWD}:/usr/src:Z" docker.io/library/node:26.13.1-slim
+    buildah run nodebuilder-patchmon sh -c "npm install -g corepack@${corepack_version} && corepack enable"
 fi
 
 echo "Build static UI files with node..."
@@ -29,7 +33,7 @@ buildah run \
     --workingdir=/usr/src/ui \
     --env="NODE_OPTIONS=--openssl-legacy-provider" \
     nodebuilder-patchmon \
-    sh -c "npm install -g corepack && corepack enable && yarn install && yarn build"
+    sh -c "yarn install --immutable && yarn build"
 
 # Add imageroot directory to the container image
 buildah add "${container}" imageroot /imageroot
