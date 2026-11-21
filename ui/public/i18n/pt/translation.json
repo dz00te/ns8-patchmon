@@ -9,13 +9,23 @@
         "network_timeout": "Tempo limite da rede",
         "404": "Recurso não encontrado",
         "network_error": "Erro de rede",
-        "validation_error": "Erros de validação"
+        "validation_error": "Erros de validação",
+        "cannot_retrieve_configuration": "Cannot retrieve configuration"
     },
     "settings": {
-        "test_field": "Campo de teste",
-        "configure_instance": "Configurar {instância}",
+        "configure_instance": "Configurar {instance}",
         "save": "Gravar",
-        "title": "Configurações"
+        "title": "Configurações",
+        "patchmon_fqdn": "patchmon hostname (FQDN)",
+        "lets_encrypt": "Request LE Certificate",
+        "http_to_https": "Force HTTPS",
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "configuring": "Configuring",
+        "instance_configuration": "Configure patchmon",
+        "domain_already_used_in_traefik": "Domain already used in traefik",
+        "host_pattern": "Must be a valid fully qualified domain name",
+        "host_format": "Must be a valid fully qualified domain name"
     },
     "common": {
         "required": "Obrigatório",
@@ -36,7 +46,11 @@
         "title": "Estado",
         "installation_node": "Nó de instalação",
         "node": "Node",
-        "no_volumes": "Sem volumes"
+        "no_volumes": "Sem volumes",
+        "patchmon_webapp": "patchmon webapp",
+        "not_configured": "Not configured",
+        "open_webapp": "Open patchmon",
+        "configure": "Configure"
     },
     "about": {
         "title": "Sobre"
