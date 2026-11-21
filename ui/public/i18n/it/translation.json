@@ -19,25 +19,25 @@
         "app_volumes": "Volume app|Volumi app",
         "installation_node": "Nodo di installazione",
         "mount": "Percorso di mount",
-        "patchmon_webapp": "patchmon webapp",
-        "not_configured": "Not configured",
-        "open_webapp": "Open patchmon",
-        "configure": "Configure"
+        "patchmon_webapp": "webapp patchmon",
+        "not_configured": "Non configurato",
+        "open_webapp": "Apri patchmon",
+        "configure": "Configura"
     },
     "settings": {
         "save": "Salva",
         "title": "Impostazioni",
         "configure_instance": "Configura {instance}",
-        "patchmon_fqdn": "patchmon hostname (FQDN)",
-        "lets_encrypt": "Request LE Certificate",
-        "http_to_https": "Force HTTPS",
-        "enabled": "Enabled",
-        "disabled": "Disabled",
-        "configuring": "Configuring",
-        "instance_configuration": "Configure patchmon",
-        "domain_already_used_in_traefik": "Domain already used in traefik",
-        "host_pattern": "Must be a valid fully qualified domain name",
-        "host_format": "Must be a valid fully qualified domain name"
+        "patchmon_fqdn": "Nome host patchmon (FQDN)",
+        "lets_encrypt": "Richiedi certificato LE",
+        "http_to_https": "Forza HTTPS",
+        "enabled": "Abilitato",
+        "disabled": "Disabilitato",
+        "configuring": "Configurazione in corso",
+        "instance_configuration": "Configura patchmon",
+        "domain_already_used_in_traefik": "Dominio già in uso in traefik",
+        "host_pattern": "Deve essere un nome di dominio completo valido",
+        "host_format": "Deve essere un nome di dominio completo valido"
     },
     "error": {
         "error": "Errore",
@@ -50,7 +50,7 @@
         "generic_error": "Qualcosa è andato storto",
         "401": "Autenticazione non valida",
         "403": "Operazione non autorizzata",
-        "cannot_retrieve_configuration": "Cannot retrieve configuration"
+        "cannot_retrieve_configuration": "Impossibile recuperare la configurazione"
     },
     "action": {
         "configure-module": "Configura modulo",
